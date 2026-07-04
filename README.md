@@ -36,21 +36,25 @@ The game runs in any browser. A **Flask + SocketIO** backend bridges the serial 
 ```
 Pixel_Flex/
 │
-├── pixel_flex/                  # Main game application
+├── esp32_firmware/              # Arduino / C++ code for the ESP32
+│   └── AnalogInput/
+│       ├── AnalogInput.ino      # Main sketch — streams raw ADC values at ~1 kHz
+│       ├── AnalogInput.txt      # Notes
+│       ├── layout.png           # Breadboard wiring diagram
+│       └── schematic.png        # Circuit schematic
+│
+├── game_software/               # Python game server + browser frontend
 │   ├── app.py                   # Flask + SocketIO backend & EMG serial bridge
+│   ├── requirements.txt         # Python dependencies
+│   ├── legacy_bridge.py         # Early standalone serial bridge (reference only)
 │   ├── templates/
-│   │   └── index.html           # Game shell (640×480 canvas)
+│   │   └── index.html           # Game shell (640 × 480 canvas)
 │   └── static/
 │       ├── game.js              # Full game engine (menu, calibration, gameplay)
 │       └── style.css            # Canvas & page styling
 │
-└── ArduinoEMG/                  # ESP32 firmware
-    ├── AnalogInput/
-    │   ├── AnalogInput.ino      # Arduino sketch — streams raw ADC values at ~1kHz
-    │   ├── AnalogInput.txt      # Notes
-    │   ├── layout.png           # Breadboard wiring diagram
-    │   └── schematic.png        # Circuit schematic
-    └── app.py                   # Early standalone Python bridge (legacy, for reference)
+├── README.md
+└── .gitignore
 ```
 
 ---
@@ -72,49 +76,60 @@ Pixel_Flex/
 | VCC | 3.3 V |
 | GND | GND |
 
-See `ArduinoEMG/AnalogInput/layout.png` and `schematic.png` for the full wiring diagram.
+See `esp32_firmware/AnalogInput/layout.png` and `schematic.png` for the full wiring diagram.
 
 ---
 
 ## 💻 Software Requirements
 
-- **Python 3.8+**
-- **Arduino IDE 2.x** (to flash the ESP32 firmware)
-- **ESP32 board package** installed in Arduino IDE
-
-### Python dependencies
+### Python
 
 ```bash
-pip install flask flask-socketio eventlet pyserial
+cd game_software
+pip install -r requirements.txt
 ```
+
+**`requirements.txt` includes:**
+
+| Package | Purpose |
+|---|---|
+| `flask` | Web server & page routing |
+| `flask-socketio` | Real-time WebSocket communication |
+| `eventlet` | Async concurrency for SocketIO |
+| `pyserial` | High-stability USB serial connection to ESP32 |
+
+### Arduino IDE
+
+- **Arduino IDE 2.x** — to flash the ESP32 firmware
+- **ESP32 board package** — install via Arduino IDE Board Manager (`esp32 by Espressif`)
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Flash the ESP32
+### Step 1 — Flash the ESP32
 
-1. Open `ArduinoEMG/AnalogInput/AnalogInput.ino` in the Arduino IDE
+1. Open `esp32_firmware/AnalogInput/AnalogInput.ino` in Arduino IDE
 2. Select your ESP32 board and the correct COM port
 3. Upload the sketch
 
-The firmware streams raw 12-bit ADC readings from **Pin 26** over Serial at **115200 baud**, one value per line.
+The firmware streams raw 12-bit ADC readings from **Pin 26** over Serial at **115200 baud**, one integer value per line.
 
-### 2. Run the Game Server
+### Step 2 — Run the Game Server
 
 ```bash
-cd pixel_flex
+cd game_software
 python app.py
 ```
 
 The server will:
 - Auto-detect your ESP32 across all available COM ports
-- Start streaming sensor data to the browser at ~20 Hz
+- Stream sensor data to the browser at ~20 Hz
 - Print `[SUCCESS] Connected on COMx!` when the ESP32 is found
 
-### 3. Open the Game
+### Step 3 — Open the Game
 
-Navigate to **http://127.0.0.1:5000** in your browser.
+Navigate to **[http://127.0.0.1:5000](http://127.0.0.1:5000)** in your browser.
 
 ---
 
@@ -122,17 +137,17 @@ Navigate to **http://127.0.0.1:5000** in your browser.
 
 ### With EMG Sensor (Full Experience)
 
-1. Connect your ESP32 and start the server (`python app.py`)
+1. Connect your ESP32 and run the server
 2. Open the browser — you'll see the **main menu**
-3. Click **CALIBRATE** (orange button) and follow the on-screen prompts:
-   - **Phase 1 (10s):** Keep your arm **relaxed** — establishes your noise floor
-   - **Phase 2 (10s):** Repeatedly **flex your muscle** — captures your action signal
+3. Click **CALIBRATE** (orange button) and follow the prompts:
+   - **Phase 1 — REST (10 s):** Keep your arm relaxed — establishes your noise floor
+   - **Phase 2 — FLEX (10 s):** Repeatedly flex your muscle — captures your action signal
 4. The threshold is calculated and sent to the backend automatically
 5. Click **PLAY** and flex to control your stickman!
 
 ### Without Sensor (Keyboard / Test Mode)
 
-1. Start the server (`python app.py`) — the sensor is optional
+1. Run the server — no sensor needed
 2. Open the browser → click **PLAY** directly (skip calibration)
 3. Press **`Space`** at the right moment to trigger each action
 
@@ -140,12 +155,12 @@ Navigate to **http://127.0.0.1:5000** in your browser.
 
 | Input | Action |
 |---|---|
-| **Muscle Flex** (EMG) | Trigger current contextual action |
+| **Muscle Flex** (EMG sensor) | Trigger current contextual action |
 | **Space** | Same as muscle flex (keyboard fallback) |
 | **F** | Skip calibration scene |
 | **Mouse Click** | Navigate all menu buttons |
 
-### Game Actions (Contextual)
+### Contextual Actions
 
 The game automatically displays the required action above your character:
 
@@ -163,17 +178,17 @@ The game automatically displays the required action above your character:
 
 ```
 Main Menu
-├── CALIBRATE  →  EMG calibration scene (use before playing with sensor)
+├── CALIBRATE  →  EMG calibration (run before playing with the sensor)
 ├── PLAY       →  Start Level 1 immediately
-├── STORE      →  Skin Shop (spend score to unlock skins)
-└── LEVELS     →  Level Select map (unlocks after completing each level)
+├── STORE      →  Skin Shop — spend score to unlock new looks
+└── LEVELS     →  Level Select map — unlocks after each completion
 ```
 
 After completing a level, press **Space** to return to the main menu — the next level will be unlocked in the Level Select screen.
 
 ---
 
-## ⚙️ Backend Configuration (`app.py`)
+## ⚙️ Backend Configuration (`game_software/app.py`)
 
 | Variable | Default | Description |
 |---|---|---|
@@ -190,7 +205,7 @@ The hysteresis filter prevents single-sample noise spikes from accidentally trig
 Every EMG peak that meets the threshold is automatically saved to a local SQLite database:
 
 ```
-pixel_flex/pixel_flex_dataset.db
+game_software/pixel_flex_dataset.db   ← created on first run, excluded from git
 ```
 
 **Schema:**
@@ -204,7 +219,7 @@ CREATE TABLE filtered_metrics (
 );
 ```
 
-This data can be used for training ML models to classify muscle gestures.
+This data can be used to train ML classifiers for gesture recognition.
 
 ---
 
@@ -212,17 +227,18 @@ This data can be used for training ML models to classify muscle gestures.
 
 | Layer | Technology |
 |---|---|
-| Firmware | Arduino C++ (ESP32) |
-| Backend | Python · Flask · Flask-SocketIO · Eventlet |
-| Frontend | Vanilla JS · HTML5 Canvas · Web Audio API |
-| Database | SQLite3 |
-| Transport | WebSocket (SocketIO) |
+| **Firmware** | Arduino C++ (ESP32) |
+| **Backend** | Python · Flask · Flask-SocketIO · Eventlet |
+| **Serial Bridge** | PySerial (USB, 115200 baud) |
+| **Frontend** | Vanilla JS · HTML5 Canvas · Web Audio API |
+| **Database** | SQLite3 |
+| **Transport** | WebSocket (SocketIO) |
 
 ---
 
 ## 🤝 Contributing
 
-Pull requests are welcome! If you find a bug or want to add a new level/skin/mechanic, feel free to open an issue first to discuss the change.
+Pull requests are welcome! If you find a bug or want to add a new level, skin, or mechanic, open an issue first to discuss the change.
 
 ---
 

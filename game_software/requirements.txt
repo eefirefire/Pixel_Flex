@@ -1,0 +1,7 @@
+# Pixel Flex — Python dependencies
+# Install with:  pip install -r requirements.txt
+
+flask>=2.3
+flask-socketio>=5.3
+eventlet>=0.33
+pyserial>=3.5

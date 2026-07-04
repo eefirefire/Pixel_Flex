@@ -1,8 +1,9 @@
-# Python
+# ── Python cache & compiled files ──────────────────────────
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.pyc
 .Python
 *.egg-info/
 dist/
@@ -10,30 +11,47 @@ build/
 *.egg
 .eggs/
 
-# Virtual environments
+# ── Virtual environments ────────────────────────────────────
 venv/
 .venv/
 env/
 .env/
+ENV/
 
-# Database
+# ── Database & local data ──────────────────────────────────
 *.db
 *.sqlite3
 
-# OS
+# ── OS junk ────────────────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 desktop.ini
 
-# IDE
+# ── IDE / Editor folders ───────────────────────────────────
 .vscode/
 .idea/
 *.suo
 *.user
+*.swp
+*.swo
+*~
 
-# Logs
+# ── Logs ───────────────────────────────────────────────────
 *.log
 
-# Secrets / env files
+# ── Secrets / local config ─────────────────────────────────
 .env
 secrets.py
+config_local.py
+
+# ── Arduino build artefacts ────────────────────────────────
+build/
+*.elf
+*.hex
+*.bin
+*.map
