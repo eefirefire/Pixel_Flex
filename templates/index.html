@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Flex - Single-Button Hardware Game</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="640" height="480"></canvas>
+    </div>
+    <script src="/static/game.js"></script>
+    <script>
+        socket.on('connect', () => { console.log("Connected to Backend Socket!"); });
+        socket.on('connect_error', (err) => { console.log("Socket Connection Error:", err); });
+    </script>
+</body>
+</html>
